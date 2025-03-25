@@ -57,30 +57,25 @@ contract AMM is AccessControl{
 		uint256 swapAmt;
 
 		//YOUR CODE HERE 
-		address buyToken = sellToken == tokenA ? tokenB : tokenA;
+		address receiveToken = sellToken == tokenA ? tokenB : tokenA;
 	
-		ERC20(sellToken).transferFrom(msg.sender, address(this), sellAmount);
+		uint256 preTradeSellReserve = ERC20(sellToken).balanceOf(address(this));
+		uint256 preTradeReceiveReserve = ERC20(receiveToken).balanceOf(address(this));
 	
-		uint256 fee = (sellAmount * feebps) / 10000;
-		uint256 netSellAmount = sellAmount - fee;
+		require(ERC20(sellToken).transferFrom(msg.sender, address(this), sellAmount), "Transfer failed");
 	
-		uint256 reserveA = ERC20(tokenA).balanceOf(address(this));
-		uint256 reserveB = ERC20(tokenB).balanceOf(address(this));
+		uint256 adjustedAmount = sellAmount * (10000 - feebps) / 10000;
 	
-		uint256 reserveSell = sellToken == tokenA ? reserveA : reserveB;
-		uint256 reserveBuy  = sellToken == tokenA ? reserveB : reserveA;
+		uint256 outputAmount = (preTradeReceiveReserve * adjustedAmount) / (preTradeSellReserve + adjustedAmount);
 	
-		uint256 newReserveSell = reserveSell + netSellAmount;
+		require(ERC20(receiveToken).transfer(msg.sender, outputAmount), "Payout failed");
 	
-		uint256 newReserveBuy = invariant / newReserveSell;
-		swapAmt = reserveBuy - newReserveBuy;
+		emit Swap(sellToken, receiveToken, sellAmount, outputAmount);
 	
-		ERC20(buyToken).transfer(msg.sender, swapAmt);
-	
-		emit Swap(sellToken, buyToken, sellAmount, swapAmt);
-		uint256 new_invariant = ERC20(tokenA).balanceOf(address(this))*ERC20(tokenB).balanceOf(address(this));
-		require( new_invariant >= invariant, 'Bad trade' );
-		invariant = new_invariant;
+		// Recalculate invariant
+		uint256 updatedInvariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
+		require(updatedInvariant >= invariant, "Invariant violation");
+		invariant = updatedInvariant;
 	}
 
 	/*
