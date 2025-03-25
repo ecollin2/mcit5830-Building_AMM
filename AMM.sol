@@ -73,7 +73,7 @@ contract AMM is AccessControl{
 		uint256 newReserveSell = reserveSell + netSellAmount;
 	
 		uint256 newReserveBuy = invariant / newReserveSell;
-		uint256 swapAmt = reserveBuy - newReserveBuy;
+		swapAmt = reserveBuy - newReserveBuy;
 	
 		ERC20(buyToken).transfer(msg.sender, swapAmt);
 	
