@@ -79,6 +79,9 @@ contract AMM is AccessControl{
 
 		newReserveSell = reserveSell; 
 		newReserveSell = reserveSell + netSellAmount;
+
+		uint256 newReserveBuy = invariant / newReserveSell;
+		swapAmt = reserveBuy - newReserveBuy;
 	
 		uint256 newReserveBuy = invariant / newReserveSell;
 		swapAmt = reserveBuy - newReserveBuy;
