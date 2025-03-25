@@ -64,31 +64,18 @@ contract AMM is AccessControl{
 		uint256 fee = (sellAmount * feebps) / 10000;
 		uint256 netSellAmount = sellAmount - fee;
 	
-		qtyA = ERC20(tokenA).balanceOf(address(this));
-		qtyB = ERC20(tokenB).balanceOf(address(this));
+		uint256 reserveA = ERC20(tokenA).balanceOf(address(this));
+		uint256 reserveB = ERC20(tokenB).balanceOf(address(this));
 	
-		uint256 reserveSell = sellToken == tokenA ? qtyA : qtyB;
-		uint256 reserveBuy  = sellToken == tokenA ? qtyB : qtyA;
+		uint256 reserveSell = sellToken == tokenA ? reserveA : reserveB;
+		uint256 reserveBuy  = sellToken == tokenA ? reserveB : reserveA;
 	
-		uint256 newReserveSell = reserveSell; 
-		if (sellToken == tokenA) {
-			newReserveSell = qtyA;
-		} else {
-			newReserveSell = qtyB;
-		}
-
-		newReserveSell = reserveSell; 
-		newReserveSell = reserveSell + netSellAmount;
-
-		uint256 newReserveBuy = invariant / newReserveSell;
-		swapAmt = reserveBuy - newReserveBuy;
+		uint256 newReserveSell = reserveSell + netSellAmount;
 	
 		uint256 newReserveBuy = invariant / newReserveSell;
-		swapAmt = reserveBuy - newReserveBuy;
+		uint256 swapAmt = reserveBuy - newReserveBuy;
 	
 		ERC20(buyToken).transfer(msg.sender, swapAmt);
-	
-		emit Swap(sellToken, buyToken, sellAmount, swapAmt);
 	
 		emit Swap(sellToken, buyToken, sellAmount, swapAmt);
 		uint256 new_invariant = ERC20(tokenA).balanceOf(address(this))*ERC20(tokenB).balanceOf(address(this));
